@@ -1,4 +1,5 @@
-# 👗 FashionFusion-AI  
+# 👗 StyleSense-Multimodal
+ 
 ### Where Vision Meets Style
 
 FashionFusion-AI is an end-to-end multimodal deep learning project that combines image and text data to classify fashion items into categories and styles.
