@@ -1,5 +1,5 @@
 import scrapy
-from fashion_scraper.items import FashionScraperItem
+from scrapers.items import FashionScraperItem
 
 
 class ShortsSpider(scrapy.Spider):
@@ -7,7 +7,7 @@ class ShortsSpider(scrapy.Spider):
     allowed_domains = ["nike.com", "www.nike.com"]
 
     def start_requests(self):
-        with open("shorts_links.txt", "r", encoding="utf-8") as f:
+        with open("../../data/raw/shorts_links.txt", "r", encoding="utf-8") as f:
             links = [line.strip() for line in f if line.strip()]
 
         self.logger.info(f"Loaded {len(links)} shorts links")

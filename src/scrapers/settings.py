@@ -1,4 +1,4 @@
-# Scrapy settings for fashion_scraper project
+# Scrapy settings for scrapers project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,10 +7,10 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "fashion_scraper"
+BOT_NAME = "scrapers"
 
-SPIDER_MODULES = ["fashion_scraper.spiders"]
-NEWSPIDER_MODULE = "fashion_scraper.spiders"
+SPIDER_MODULES = ["scrapers.spiders"]
+NEWSPIDER_MODULE = "scrapers.spiders"
 
 ADDONS = {}
 
@@ -90,7 +90,7 @@ ITEM_PIPELINES = {
     "fashion_scraper.pipelines.FashionImagesPipeline": 1,
 }
 
-IMAGES_STORE = "images"
+IMAGES_STORE = "../assets/images"
 
 MEDIA_ALLOW_REDIRECTS = True
 

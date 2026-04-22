@@ -1,23 +1,23 @@
 import scrapy
-from fashion_scraper.items import FashionScraperItem
+from scrapers.items import FashionScraperItem
 
 
-class HatsHeadwearSpider(scrapy.Spider):
-    name = "hats_headwear"
+class ShoesSpider(scrapy.Spider):
+    name = "shoes"
     allowed_domains = ["nike.com", "www.nike.com"]
 
     def start_requests(self):
-        with open("hats_headwear_links.txt", "r", encoding="utf-8") as f:
+        with open("../../data/raw/shoes_links.txt", "r", encoding="utf-8") as f:
             links = [line.strip() for line in f if line.strip()]
 
-        self.logger.info(f"Loaded {len(links)} hats/headwear links")
+        self.logger.info(f"Loaded {len(links)} shoes links")
 
         for index, link in enumerate(links, start=1):
             yield scrapy.Request(
                 url=link,
                 callback=self.parse_product,
                 meta={
-                    "label": "hats_headwear",
+                    "label": "shoes",
                     "index": index
                 }
             )

@@ -86,7 +86,7 @@ if __name__ == "__main__":
     print("\nTOTAL PRODUCTS:", len(links))
     
     # حفظ في ملف
-    with open("hoodies_sweatshirts_links.txt", "w", encoding="utf-8") as f:
+    with open("../../data/raw/hoodies_sweatshirts_links.txt", "w", encoding="utf-8") as f:
         for link in links:
             f.write(link + "\n")
     print(f"Saved {len(links)} links to hoodies_sweatshirts_links.txt")
