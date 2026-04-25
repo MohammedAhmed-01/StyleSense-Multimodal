@@ -4,7 +4,7 @@ import pandas as pd
 
 # كل الملفات اللي عايز تدمجها
 FILES = [
-    "hoodies_clean.json",
+    "hoodies_sweatshirts_clean.json",
     "tops_clean.json",
     "shorts_clean.json",
     "shoes_clean.json",
