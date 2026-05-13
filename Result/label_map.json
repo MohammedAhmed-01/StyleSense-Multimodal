@@ -1,0 +1,18 @@
+{
+  "label2id": {
+    "accessories": 0,
+    "bottoms": 1,
+    "footwear": 2,
+    "other": 3,
+    "outerwear": 4,
+    "tops": 5
+  },
+  "id2label": {
+    "0": "accessories",
+    "1": "bottoms",
+    "2": "footwear",
+    "3": "other",
+    "4": "outerwear",
+    "5": "tops"
+  }
+}

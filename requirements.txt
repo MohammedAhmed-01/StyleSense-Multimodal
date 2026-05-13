@@ -1,1 +1,15 @@
 scrapy
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+pillow
+tqdm
+requests
+beautifulsoup4
+torch
+torchvision
+tensorflow
+transformers
+opencv-python

@@ -80,15 +80,46 @@ st.markdown("""
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Style the tab bar */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 6px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        color: #a0a0c0;
+        font-weight: 600;
+        padding: 8px 20px;
+        background: transparent;
+        transition: all 0.2s ease;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(45deg, #ff416c, #ff4b2b) !important;
+        color: white !important;
+    }
+
+    .stTabs [data-baseweb="tab-border"] {
+        display: none;
+    }
+
+    .camera-hint {
+        font-size: 13px;
+        color: #7070a0;
+        margin-top: 6px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Define Model Architecture
+# ── Model Architecture ────────────────────────────────────────────────────────
 class MultimodalModel(nn.Module):
     def __init__(self, num_classes=6, dropout_rate=0.5):
         super(MultimodalModel, self).__init__()
         
-        # Image Encoder (EfficientNet-B0)
         efficientnet = models.efficientnet_b0(pretrained=False)
         self.image_encoder = nn.Sequential(
             efficientnet.features,
@@ -96,10 +127,8 @@ class MultimodalModel(nn.Module):
             nn.Flatten()
         )
         
-        # Text Encoder (BERT)
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         
-        # Fusion Network
         self.fusion = nn.Sequential(
             nn.Linear(2048, 256),
             nn.BatchNorm1d(256),
@@ -115,29 +144,23 @@ class MultimodalModel(nn.Module):
         output = self.fusion(combined_features)
         return output
 
-# App Configuration
-MODEL_PATH = "result/result/model_A_best.pth"
-LABEL_MAP_PATH = "result/result/label_map.json"
+# ── Paths ─────────────────────────────────────────────────────────────────────
+MODEL_PATH     = r"F:\faculty\Level 3 S_2\Neural Networks and Deep Learning\Project\StyleSense-Multimodal\StyleSense-Multimodal\Result\model_A_best.pth"
+LABEL_MAP_PATH = r"F:\faculty\Level 3 S_2\Neural Networks and Deep Learning\Project\StyleSense-Multimodal\StyleSense-Multimodal\Result\label_map.json"
 
 @st.cache_resource
 def load_model():
-    # Load Label Map
     with open(LABEL_MAP_PATH, "r") as f:
         labels_info = json.load(f)
     id2label = {int(k): v for k, v in labels_info['id2label'].items()}
-    
     num_classes = len(id2label)
     
-    # Initialize Model
     model = MultimodalModel(num_classes=num_classes)
-    
-    # Load Weights
     state_dict = torch.load(MODEL_PATH, map_location=torch.device('cpu'))
     model.load_state_dict(state_dict)
     model.eval()
     
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    
     return model, tokenizer, id2label
 
 @st.cache_data
@@ -145,47 +168,76 @@ def get_image_transforms():
     return transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])
     ])
 
-# Header
+# ── Header ────────────────────────────────────────────────────────────────────
 st.title("👗 Multimodal Fashion Classifier")
-st.markdown("Upload an image of a fashion item and provide a brief text description. Our deep learning model will analyze both to accurately classify the product category.")
+st.markdown("Upload an image **or take a photo** of a fashion item and provide a brief text description. Our deep learning model will analyze both to accurately classify the product category.")
 
-# Main Layout
+# ── Main Layout ───────────────────────────────────────────────────────────────
 col1, col2 = st.columns([1, 1])
+
+image = None  # will be set by whichever input the user chooses
 
 with col1:
     st.markdown("### 1. Image Input")
-    uploaded_file = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
-    
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption="Uploaded Image", use_container_width=True)
+
+    # ── Tab switcher: Upload vs Camera ──────────────────────────────────────
+    tab_upload, tab_camera = st.tabs(["📁  Upload File", "📷  Use Camera"])
+
+    with tab_upload:
+        uploaded_file = st.file_uploader(
+            "Upload an image…",
+            type=["jpg", "jpeg", "png"],
+            label_visibility="collapsed"
+        )
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Uploaded Image", use_container_width=True)
+
+    with tab_camera:
+        st.markdown('<p class="camera-hint">Allow browser access to your webcam, then click the button below.</p>',
+                    unsafe_allow_html=True)
+        camera_photo = st.camera_input("Take a photo", label_visibility="collapsed")
+        if camera_photo is not None:
+            image = Image.open(camera_photo).convert("RGB")
+            # The camera widget already previews the capture, but show it
+            # explicitly so the layout stays consistent when switching tabs.
+            st.image(image, caption="Captured Photo", use_container_width=True)
 
 with col2:
     st.markdown("### 2. Text Input")
-    text_input = st.text_area("Describe the item (optional but recommended):", placeholder="e.g. 'A red cotton t-shirt with short sleeves'")
+    text_input = st.text_area(
+        "Describe the item (optional but recommended):",
+        placeholder="e.g. 'A red cotton t-shirt with short sleeves'"
+    )
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     predict_button = st.button("Classify Item", use_container_width=True)
 
-# Prediction Logic
+# ── Prediction ────────────────────────────────────────────────────────────────
 if predict_button:
-    if uploaded_file is None:
-        st.error("Please upload an image first!")
+    if image is None:
+        st.error("Please upload an image or capture one with the camera first!")
     else:
-        with st.spinner("Analyzing image and text..."):
+        with st.spinner("Analyzing image and text…"):
             try:
                 model, tokenizer, id2label = load_model()
                 transform = get_image_transforms()
                 
-                # Prepare Inputs
+                # Prepare inputs
                 image_tensor = transform(image).unsqueeze(0)
                 
-                text_to_encode = text_input if text_input.strip() else "fashion item"
-                encoded_text = tokenizer(text_to_encode, padding='max_length', max_length=64, truncation=True, return_tensors="pt")
+                text_to_encode = text_input.strip() if text_input.strip() else "fashion item"
+                encoded_text = tokenizer(
+                    text_to_encode,
+                    padding='max_length',
+                    max_length=64,
+                    truncation=True,
+                    return_tensors="pt"
+                )
                 
                 # Inference
                 with torch.no_grad():
@@ -198,7 +250,7 @@ if predict_button:
                     probabilities = torch.nn.functional.softmax(outputs, dim=1)
                     confidence, predicted_idx = torch.max(probabilities, 1)
                     
-                    predicted_label = id2label[predicted_idx.item()]
+                    predicted_label  = id2label[predicted_idx.item()]
                     confidence_score = confidence.item() * 100
                 
                 st.markdown(f"""
@@ -208,18 +260,15 @@ if predict_button:
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # Show probability distribution
+                # Probability distribution
                 st.markdown("### Class Probabilities")
-                probs = probabilities[0].numpy()
                 import pandas as pd
-                
-                # Create a nice looking dataframe for probabilities
+                probs = probabilities[0].numpy()
                 df_probs = pd.DataFrame({
-                    "Category": [id2label[i] for i in range(len(id2label))],
+                    "Category":    [id2label[i] for i in range(len(id2label))],
                     "Probability": probs * 100
                 })
                 df_probs = df_probs.sort_values(by="Probability", ascending=False)
-                
                 st.bar_chart(df_probs.set_index("Category"))
                 
             except Exception as e:
